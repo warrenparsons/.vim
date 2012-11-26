@@ -10,13 +10,16 @@ set guifont=Monaco:h13					" font preferences
 colorscheme candycode_wlp				" color scheme
 set ruler								" line numbers, rulers, and everything else
 set number								" show line numbers
-" set scrolloff=3						" always have at least 3 lines before the window's bottom
+set numberwidth=6						" Make sure gutter maintains constant width for abs/relative numbering
+set scrolloff=3							" always have at least 3 lines before the window's bottom
 set hlsearch							" Highlight all instances of search term
 set cursorline							" highlight current line
-set splitbelow							" Split windows BELOW current window!
-set synmaxcol=500						" limit syntax highlighting on very long strings to improve performance
+set splitbelow							" Split vertical windows BELOW current window!
+set splitright							" Split horizontal windows to RIGHT of current window
+set synmaxcol=300						" limit syntax highlighting on very long strings to improve performance
 set showcmd								" Show current command in status bar
-set timeoutlen=250						" Set command timeout
+set timeoutlen=350						" Set command timeout
+set guioptions-=T
 
 au BufRead,BufNewFile jquery.*.js set ft=javascript syntax=jquery " Set jQuery syntax highlighting
 
@@ -45,7 +48,10 @@ set cindent
 set cinoptions=(0,u0,U0)
 
 set incsearch							" activate incremental search
+set ignorecase smartcase				" make search case-insensitive
 set display=lastline					" Fix some scrolling issues
+
+set nrformats=hex
 
 " Consolidate temp files
 set backupdir=~/.vim-tmp,~/.tmp,~/tmp,/var/tmp,/tmp
@@ -54,11 +60,14 @@ set directory=~/.vim-tmp,~/.tmp,~/tmp,/var/tmp,/tmp
 " Force highlighting for certain file types
 au BufReadPost *.jsp set syntax=html
 au BufReadPost *.jsp set filetype=html
+au BufReadPost *.cshtml set syntax=html
+au BufReadPost *.cshtml set filetype=html
 au BufReadPost *.less set syntax=less
 au BufReadPost *.less set filetype=less
 au BufReadPost *.js set syntax=jquery
 
-
+" MiniBufExplorer - Position at top
+" let g:miniBufExplSplitBelow=0
 
 " Set wordwrap and line breaking
 set wrap
@@ -98,6 +107,9 @@ map <C-S-U> :DockSend<CR>
 map <LEADER>v :e ~/.vimrc<CR>
 map <D-r> :NERDTreeFind<CR>
 
+" Ack shortcut
+nnoremap <LEADER>f :Ack!<space>
+
 inoremap jk <esc>
 inoremap kj <esc>
 
@@ -114,7 +126,7 @@ nnoremap <LEADER>w :BD<CR>
 nnoremap <LEADER>j :join<CR>
 
 " Split a line at the cursor
-nmap <silent> <leader>s i<CR><ESC>
+nmap <silent> <leader>s a<CR><ESC>
 
 " Remap up and down movements to be visual up/down
 nnoremap j gj
@@ -134,6 +146,13 @@ map <C-j> <C-w>j
 map <C-k> <C-w>k
 map <C-l> <C-w>l
 
+" Easier bracket matching
+nnoremap <tab> %
+
+" Easy indent/unindent
+vnoremap <Tab> >gv
+vnoremap <S-Tab> <gv
+
 " Set nowrap with keyboard shortcut to wrap temporarily
 noremap <LEADER>r :set nowrap!<CR>
 
@@ -141,8 +160,27 @@ noremap <LEADER>r :set nowrap!<CR>
 nnoremap <C-e> 3<C-e>
 nnoremap <C-y> 3<C-y>
 
+" Quick buffer access
+nnoremap <Leader>l :ls<CR>
+nnoremap <Leader>b :bp<CR>
+"nnoremap <Leader>f :bn<CR>
+nnoremap <Leader>g :e#<CR>
+nnoremap <Leader>1 :1b<CR>
+nnoremap <Leader>2 :2b<CR>
+nnoremap <Leader>3 :3b<CR>
+nnoremap <Leader>4 :4b<CR>
+nnoremap <Leader>5 :5b<CR>
+nnoremap <Leader>6 :6b<CR>
+nnoremap <Leader>7 :7b<CR>
+nnoremap <Leader>8 :8b<CR>
+nnoremap <Leader>9 :9b<CR>
+nnoremap <Leader>0 :10b<CR>
+
 " Make : entry easier
 "nnoremap ; :
+
+" Shortcut for converting image URL on clipboard to base64
+command B64 :call Img2Data()<CR>
 
 " <Ctrl-l> redraws the screen and removes any search highlighting.
 nnoremap <silent> <LEADER>l :nohl<CR><C-l>
@@ -178,6 +216,28 @@ vnoremap <leader>p "_dP
 
 runtime macros/matchit.vim
 
+" Toggle relative line numbers
+function! NumberToggle()
+  if(&relativenumber == 1)
+    set number
+  else
+    set relativenumber
+  endif
+endfunc
+
+nnoremap <C-n> :call NumberToggle()<cr>
+
+" Set relative line numbers at startup
+set relativenumber
+
+" Activate/deactivate relative line numbering when entering/leaving Insert mode
+autocmd InsertEnter * :set number
+autocmd InsertLeave * :set relativenumber
+
+" Activate/deactivate relative line numbering based on app focus
+:au FocusLost * :set number
+:au FocusGained * :set relativenumber
+
 " Launch Google search in Chrome by typing Alt+g
 function! Terms()
   call inputsave()
@@ -190,7 +250,7 @@ map © <ESC>:! /usr/bin/open -a "/Applications/Google Chrome.app" 'https://googl
 
 " Close Tags
 let g:ragtag_global_maps = 1
-imap df </<Plug>ragtagHtmlComplete
+imap df </<Plug>ragtagHtmlComplete<DEL>
 
 " Highlight background color when in insert mode
 au InsertEnter * hi Normal guibg=#292b10
@@ -235,10 +295,14 @@ nmap <LEADER>' :call SynStack()<cr>
 "flag problematic whitespace (trailing and spaces before tabs)
 "Note you get the same by doing let c_space_errors=1 but
 "this rule really applys to everything.
-highlight RedundantSpaces term=standout ctermbg=red guibg=red
+"highlight RedundantSpaces term=standout ctermbg=red guibg=red
 match RedundantSpaces /\s\+$\| \+\ze\t/ "\ze sets end of match so only spaces highlighted
 "use :set list! to toggle visible whitespace on/off
-set listchars=tab:>-,trail:.,extends:>
+"set listchars=tab:>-,trail:.,extends:>
+set listchars=tab:▶\ 
+set listchars+=trail:◂
+set listchars+=extends:❯
+set listchars+=precedes:❮
 
 " clear trailing whitespace
 nnoremap <LEADER>c :%s/\s\+$//e<CR>
